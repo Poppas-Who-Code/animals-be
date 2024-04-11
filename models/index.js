@@ -3,18 +3,20 @@ const { Sequelize } = require('sequelize');
 module.exports = () => {
   const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './animals.db'
+    storage: './zoo.db'
   });
 
   require('./habitat')(sequelize)
-  require('./animal')(sequelize)
+  require('./employee')(sequelize)
+  require('./assignment')(sequelize)
 
-  const { Animal, Habitat } = sequelize.models
+  const { Habitat, Employee, Assignment } = sequelize.models
 
-  Animal.belongsTo(Habitat, { foreignKey: 'habitat_id', as: 'habitat' })
-  Habitat.hasMany(Animal, { foreignKey: 'habitat_id', as: 'animals' })
+  Habitat.belongsToMany(Employee, { through: Assignment })
+  Employee.belongsToMany(Habitat, { through: Assignment })
 
-  Animal.sync()
+  Employee.sync()
+  Assignment.sync()
   Habitat.sync()
   return sequelize
 }
