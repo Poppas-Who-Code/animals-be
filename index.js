@@ -1,22 +1,23 @@
 const express = require('express')
 
-const { Animal } = require('./models/animal')
+const setup = require('./models')
 
 const app = express()
 app.use(express.json())
 const port = 3000
 
-// query by type
+const sequelize = setup()
+const { Animal, Habitat } = sequelize.models
+
 app.get('/animals', async (req, res) => {
-  const { diet, sortParam, sortDirection } = req.query
+  const { diet, sortParam, sortDirection, } = req.query
 
   let results;
   if (diet) {
-    results = await Animal.findAll({ where: { diet } })
+    results = await Animal.findAll({ where: { diet }, include: 'habitat' })
   } else {
-    results = await Animal.findAll()
+    results = await Animal.findAll({ include: 'habitat' })
   }
-
 
   if (sortParam && sortDirection) {
     results.sort((animal1, animal2) => {
@@ -25,48 +26,77 @@ app.get('/animals', async (req, res) => {
   }
 
   res.json(results)
-  // Animal.findAll().then(results => {
-  //   res.json(results)
-  // })
 })
 
 app.get('/animals/:id', async (req, res) => {
   const { id } = req.params
-  const animal = await Animal.findByPk(id)
+  const animal = await Animal.findByPk(id, { include: 'habitat' })
   res.json(animal)
-
 })
 
 app.post('/animals', async (req, res) => {
-  // const name = req.body.name
-  // const type = req.body.type
-  // const diet = req.body.diet
-  // const domesticated = req.body.domesticated
-  // const population = req.body.population
-  // skipping validations
-  const { name, type, diet, domesticated, population } = req.body
-  const animal = await Animal.create({ name, type, diet, domesticated, population })
+  const { name, type, diet, domesticated, population, habitat_id } = req.body
 
-  console.log(animal)
-  res.send('Created!');
+  // what do we need? we need to get the habitat that we're trying to add to
+
+  // const targetHabitat = habitats.find(habitat => habitat.id === habitat_id)
+  const targetHabitat = await Habitat.findByPk(habitat_id, { include: 'animals' })
+  // get its capacity and compare it to the sum of all existing animals' populations
+  let totalPop = 0
+  targetHabitat.animals.forEach(animal => {
+    totalPop += animal.population
+  })
+
+  totalPop += population
+  // //prevent behavior below if indicated habitat would be pushed beyond its capacity
+  if (totalPop > targetHabitat.capacity) {
+    res.statusMessage = "Could not add animal to habitat, new population would be above specified capacity";
+    res.status(400).end();
+  } else {
+    await Animal.create({ name, type, diet, domesticated, population, habitat_id })
+    res.send('Created')
+  }
 })
 
 app.delete('/animals/:id', async (req, res) => {
-  // 1. acquire data from request
   const { id } = req.params
-  
-
-  // 1a. validate data (optional)
-
-  // 2. use data acquired in step 1 to interact with database 
   await Animal.destroy({ where: { id } })
-
-  // 3. send a response
   res.send('Deleted!');
 })
+
+app.patch('/animals/:id/change_population', async (req, res) => {
+  const { id } = req.params
+  const { population } = req.body
+
+  await Animal.update({ population }, { where: { id } })
+
+  res.send('Updated!')
+})
+
+app.delete('/animals', async (req, res) => {
+  await Animal.drop()
+  res.send('Deleted EVERYTHING!');
+})
+
+// HABITATS
+app.get('/habitats', async (req, res) => {
+  const habitats = await Habitat.findAll({ include: 'animals' })
+  res.json(habitats)
+})
+
+app.get('/habitats/:id', async (req, res) => {
+  const { id } = req.params
+  const habitat = await Habitat.findByPk(id, { include: 'animals' })
+  res.json(habitat)
+})
+
+app.post('/habitats', async (req, res) => {
+  const { name, description, climate, open, capacity } = req.body
+  await Habitat.create({ name, description, climate, open, capacity })
+  res.json('Created!')
+})
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
-
-// Patch (or updating) is basically a combination of GET to find and POST to create

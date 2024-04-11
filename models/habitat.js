@@ -1,28 +1,26 @@
-
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  const Animal = sequelize.define('Animal', {
-    // Model attributes are defined here
+  const Habitat = sequelize.define('Habitat', {
     name: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    type: {
+    description: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    diet: {
+    climate: {
       type: DataTypes.STRING,
       allowNull: false
     },
-    domesticated: {
+    open: {
       type: DataTypes.BOOLEAN,
       allowNull: false
     },
-    population: {
+    capacity: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
     }
   });
 
