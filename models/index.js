@@ -12,8 +12,15 @@ module.exports = () => {
 
   const { Habitat, Employee, Assignment } = sequelize.models
 
-  Habitat.belongsToMany(Employee, { through: Assignment })
-  Employee.belongsToMany(Habitat, { through: Assignment })
+  Assignment.belongsTo(Employee, { as: "employee", foreignKey: "employee_id", })
+  Employee.hasMany(Assignment, { as: "assignments", foreignKey: "employee_id" })
+
+  Assignment.belongsTo(Habitat, { as: "habitat", foreignKey: "habitat_id" })
+  Habitat.hasMany(Assignment, { as: "assignments", foreignKey: "habitat_id" })
+
+
+  Habitat.belongsToMany(Employee, { through: Assignment, as: "employees", foreignKey: 'habitat_id' })
+  Employee.belongsToMany(Habitat, { through: Assignment, as: "habitats", foreignKey: 'employee_id' })
 
   Employee.sync()
   Assignment.sync()

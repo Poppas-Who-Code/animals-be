@@ -8,3 +8,9 @@
   BONUS:
     - DELETE (?) -> removes an animal with a specified ID from your array (fill in the '?')
     - PATCH (?) -> updates the values of an animal with a specified ID (fill in the '?')
+
+
+Regex:
+
+Learn regex: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions
+Practice regex: https://regexr.com/
