@@ -14,3 +14,22 @@ Regex:
 
 Learn regex: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions
 Practice regex: https://regexr.com/
+
+
+Client:
+- first_name
+- last_name
+- email
+
+Appointment:
+- fee
+- date
+- payment_received
+- status
+- client_id
+- service_id
+
+Service:
+- name
+- duration
+- price

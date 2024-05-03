@@ -1,7 +1,8 @@
 const express = require('express')
 const { Op } = require('@sequelize/core');
 
-const setup = require('./models')
+const setup = require('./models');
+const { where } = require('sequelize');
 
 const app = express()
 app.use(express.json())
@@ -48,7 +49,7 @@ const getValueAndOperation = (queryValue) => {
 // list and filter employees by some field
 // GET /employees/filter?experience=5&role=Ornithologist
 app.get('/employees/filter', async (req, res) => {
-  const { experience, role, salary } = req.query
+  const { experience, role, salary, sortBy, sortDirection } = req.query
 
   const filterData = {}
   if (experience) {
@@ -65,10 +66,24 @@ app.get('/employees/filter', async (req, res) => {
     filterData.salary = { [operation]: value }
   }
 
+  const sortData = [
+    [sortBy, sortDirection.toUpperCase()]
+  ]
 
-  const employeeList = await Employee.findAll({ where: filterData })
+  const employeeList = await Employee.findAll({ where: filterData, order: sortData })
   res.json(employeeList)
 })
+
+// return all habitats that have incomplete assignments
+app.get('/habitats/incomplete_assignments', async (req, res) => {
+  // get all assignments that are EITHER incomplete OR unassigned
+  // const assignments = await Assignment.findAll({ include: 'habitat', where: { [Op.or]: [{ status: "incomplete" }, { status: "unassigned" }] } })
+  // const habitats = assignments.map(assignment => assignment.habitat)
+
+  const habitats = await Habitat.findAll({ include: { model: Assignment, as: "assignments", where: { [Op.or]: [{ status: "incomplete" }, { status: "unassigned" }] } } })
+  res.json(habitats)
+})
+
 
 // populate/update employee info
 app.put('/employees', async (req, res) => {
@@ -170,8 +185,28 @@ app.delete('/assignments/:id', async (req, res) => {
 
 // list all habitats and all employees working in that habitat
 app.get('/habitats', async (req, res) => {
-  const habitats = await Habitat.findAll({ include: 'employees' });
-  res.json(habitats)
+  const { name, climate, open, capacity } = req.query
+
+  const filterData = {}
+  if (name) {
+    filterData.name = name
+  }
+
+  if (climate) {
+    filterData.climate = climate
+  }
+
+  if (open) {
+    filterData.open = open === "1"
+  }
+
+  if (capacity) {
+    const { value, operation } = getValueAndOperation(capacity)
+    filterData.capacity = { [operation]: value }
+  }
+
+  const habitatList = await Habitat.findAll({ where: filterData, include: 'employees' });
+  res.json(habitatList)
 })
 
 // list all of an employee's assignments
@@ -190,8 +225,6 @@ app.get('/habitats/:id/assignments', async (req, res) => {
 
   res.json(assignments)
 })
-
-
 
 // update an assignment's status
 app.patch('/assignments/:id', async (req, res) => {
