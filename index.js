@@ -1,11 +1,13 @@
 const express = require('express')
 const { Op } = require('@sequelize/core');
+const cors = require('cors')
 
 const setup = require('./models');
 const { where } = require('sequelize');
 
 const app = express()
 app.use(express.json())
+app.use(cors())
 const port = 3000
 
 const sequelize = setup()
@@ -65,12 +67,12 @@ app.get('/employees/filter', async (req, res) => {
     const { value, operation } = getValueAndOperation(salary)
     filterData.salary = { [operation]: value }
   }
+  const order = []
+  if (sortBy && sortDirection) {
+    order.push([sortBy, sortDirection.toUpperCase()])
+  }
 
-  const sortData = [
-    [sortBy, sortDirection.toUpperCase()]
-  ]
-
-  const employeeList = await Employee.findAll({ where: filterData, order: sortData })
+  const employeeList = await Employee.findAll({ where: filterData, order })
   res.json(employeeList)
 })
 
