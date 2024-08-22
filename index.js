@@ -89,7 +89,9 @@ app.get('/habitats/incomplete_assignments', async (req, res) => {
 
 // populate/update employee info
 app.put('/employees', async (req, res) => {
-  const { name,
+  const {
+    id,
+    name,
     role,
     experience,
     qualifications,
@@ -107,7 +109,7 @@ app.put('/employees', async (req, res) => {
     hire_date: new Date(hire_date),
     salary,
     employment_status
-  }, { where: { name } })
+  }, id ? { where: { id } } : {})
 
 
   res.send('updated employee')
